@@ -72,6 +72,19 @@ If you have not yet gotten WiFi working, start [here](https://github.com/willard
 
 ## What This Script Installs and Configures
 
+### Automatic Security Updates
+- linux-image-amd64 — kernel meta-package, ensures the kernel actually updates
+  automatically rather than staying pinned to the version installed at setup
+- intel-microcode — CPU microcode updates for Spectre/Meltdown-class mitigations
+- unattended-upgrades — daily auto-install of Debian security patches and kernel
+  updates. Extended to also cover the stable -updates pocket and the VS Code
+  Microsoft repo (third-party origins are excluded by default)
+- needrestart — notifies you when a kernel or library update requires a reboot
+  to take effect. No auto-reboot; you decide when to restart.
+- fwupd + fwupd-refresh.timer — UEFI and firmware updates via LVFS, refreshed
+  automatically on a timer
+- AppArmor verified active (ships enabled on Debian 13, warns if disabled)
+
 ### Desktop Environment
 - xorg — display server
 - xfce4 + xfce4-goodies — lightweight desktop, chosen specifically because
@@ -218,7 +231,7 @@ If you see "sudo is working" you are ready.
 
 Run this single command as your regular user, not as root:
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.6.3/setup.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.0/setup.sh)
 
 The script prints progress for every step. Estimated time: 20–40 minutes
 depending on internet speed. LibreOffice alone is ~300MB.
@@ -234,7 +247,7 @@ WhiteSur dark GTK theme, macOS-style window controls on the left, and a
 Plank dock at the bottom — run this after the setup script completes and
 you have rebooted into the desktop:
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.6.3/themes.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.0/themes.sh)
 
 You will be prompted to choose a mode:
 
@@ -282,6 +295,7 @@ https://github.com/willardcsoriano/debian-trixie-intel-macbook-broadcom-offline
 
 ## Version History
 
+- **v1.7.0** — Add automatic security updates section: linux-image-amd64, intel-microcode, unattended-upgrades (extended to -updates pocket and VS Code repo), needrestart, fwupd with timer, AppArmor check
 - **v1.6.3** — Align window title to the left for macOS style in themes.sh
 - **v1.6.2** — Fix FaceTime HD webcam driver re-installing on every run; replace unreliable modinfo check with direct find on module path
 - **v1.6.1** — Fix conflicting VS Code apt sources (vscode.sources vs vscode.list breaks all apt installs); use full path for swapon

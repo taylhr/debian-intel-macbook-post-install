@@ -327,6 +327,51 @@ if ! /usr/sbin/swapon --show 2>/dev/null | grep -q .; then
 fi
 
 # ─────────────────────────────────────────────
+# AUTOMATIC SECURITY UPDATES
+# ─────────────────────────────────────────────
+print_header "Automatic Security Updates"
+echo -e "  ${CYAN}Enabling unattended security patches, kernel updates, CPU microcode, and firmware updates.${NC}\n"
+
+install_pkg "linux-image-amd64" "linux-image-amd64 (kernel meta-package)"
+install_pkg "intel-microcode" "Intel CPU microcode (security mitigations)"
+install_pkg "unattended-upgrades" "unattended-upgrades (auto security patches)"
+install_pkg "needrestart" "needrestart (reboot-needed notifier)"
+install_pkg "fwupd" "fwupd (firmware updater)"
+
+# Create /etc/apt/apt.conf.d/20auto-upgrades so the apt periodic timers actually fire
+sudo dpkg-reconfigure -f noninteractive unattended-upgrades >>"$LOG_FILE" 2>&1 || true
+
+# Default 50unattended-upgrades only patches the -security pocket and Debian origins.
+# Extend to the stable -updates pocket and the VS Code repo (third-party origins are
+# excluded by default, so VS Code would otherwise never auto-update).
+UU_EXTRA="/etc/apt/apt.conf.d/52unattended-upgrades-extra"
+if [ ! -f "$UU_EXTRA" ]; then
+    print_info "Extending unattended-upgrades to cover -updates pocket and VS Code..."
+    sudo tee "$UU_EXTRA" > /dev/null << 'EOF'
+Unattended-Upgrade::Origins-Pattern {
+    "origin=Debian,codename=${distro_codename}-updates";
+    "site=packages.microsoft.com";
+};
+EOF
+    print_ok "unattended-upgrades extended"
+else
+    print_skip "unattended-upgrades extra origins"
+fi
+
+# Installing fwupd doesn't auto-refresh metadata; the timer does
+if systemctl list-unit-files fwupd-refresh.timer &>/dev/null; then
+    sudo systemctl enable --now fwupd-refresh.timer >>"$LOG_FILE" 2>&1 || true
+    print_ok "Firmware metadata refresh timer enabled"
+fi
+
+# AppArmor ships enabled on Debian 13; only warn if it has been disabled
+if systemctl is-active apparmor &>/dev/null; then
+    print_ok "AppArmor is active"
+else
+    print_warning "AppArmor is not active — consider: sudo systemctl enable --now apparmor"
+fi
+
+# ─────────────────────────────────────────────
 # DESKTOP ENVIRONMENT
 # ─────────────────────────────────────────────
 print_header "Desktop Environment"
