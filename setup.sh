@@ -110,6 +110,36 @@ xfconf_set() {
     xfconf-query "$@" 2>>"$LOG_FILE" || true
 }
 
+fix_desktop_launchers() {
+    local apps_dir="/usr/share/applications"
+    local local_dir="$ACTUAL_HOME/.local/share/applications"
+    local fixed=0
+    mkdir -p "$local_dir"
+
+    for desktop_file in "$apps_dir"/*.desktop; do
+        local app_name
+        app_name=$(basename "$desktop_file")
+
+        if [ -f "$local_dir/$app_name" ] && ! grep -qE "Exec=.*%[FfUu]" "$local_dir/$app_name"; then
+            continue
+        fi
+
+        if ! grep -qE "Exec=.*%[FfUu]" "$desktop_file"; then
+            continue
+        fi
+
+        sed 's/ *%[FfUu]//g' "$desktop_file" > "$local_dir/$app_name"
+        ((fixed++))
+    done
+
+    if [ "$fixed" -gt 0 ]; then
+        update-desktop-database "$local_dir"
+        print_ok "Fixed $fixed app launcher(s) for XFCE App Finder"
+    else
+        print_skip "App launcher fix — all already clean"
+    fi
+}
+
 create_shortcut() {
     local name=$1
     local exec=$2
@@ -453,6 +483,8 @@ fi
 
 install_pkg "code" "Visual Studio Code"
 
+
+
 # ─────────────────────────────────────────────
 # MEDIA AND UTILITIES
 # ─────────────────────────────────────────────
@@ -746,6 +778,13 @@ echo -e "  ${CYAN}Installing fonts for better text rendering across the system.$
 
 install_pkg "fonts-liberation" "Liberation fonts (Arial/Times/Courier replacements)"
 install_pkg "fonts-noto" "Noto fonts (broad Unicode coverage)"
+
+# ─────────────────────────────────────────────
+# APP FINDER LAUNCHER FIX
+# ─────────────────────────────────────────────
+print_header "App Finder Launcher Fix"
+echo -e "  ${CYAN}Removing file argument placeholders so all apps launch cleanly from App Finder.${NC}\n"
+fix_desktop_launchers
 
 # ─────────────────────────────────────────────
 # DESKTOP SHORTCUTS

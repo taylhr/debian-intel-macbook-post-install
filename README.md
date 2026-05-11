@@ -179,6 +179,14 @@ means it survives kernel updates without any manual intervention.
 - fonts-liberation — Arial, Times New Roman, Courier New replacements
 - fonts-noto — broad Unicode coverage
 
+### App Finder Launcher Fix
+Some installed `.desktop` files declare `Exec=...%F` or `%U`, telling the
+launcher to pass a file argument. When you launch those apps from the XFCE
+App Finder with no file selected they silently fail. This step writes
+cleaned copies of affected launchers into `~/.local/share/applications`
+(per-user overrides — system files are left untouched) so every app starts
+cleanly from the App Finder.
+
 ### Desktop Shortcuts
 Shortcuts for every installed app are placed on your Desktop so you can
 find everything without memorizing commands. First time you click a
@@ -231,7 +239,7 @@ If you see "sudo is working" you are ready.
 
 Run this single command as your regular user, not as root:
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.0/setup.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.1/setup.sh)
 
 The script prints progress for every step. Estimated time: 20–40 minutes
 depending on internet speed. LibreOffice alone is ~300MB.
@@ -247,7 +255,7 @@ WhiteSur dark GTK theme, macOS-style window controls on the left, and a
 Plank dock at the bottom — run this after the setup script completes and
 you have rebooted into the desktop:
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.0/themes.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.1/themes.sh)
 
 You will be prompted to choose a mode:
 
@@ -295,6 +303,7 @@ https://github.com/willardcsoriano/debian-trixie-intel-macbook-broadcom-offline
 
 ## Version History
 
+- **v1.7.1** — Fix App Finder launches for apps whose `.desktop` files declare `Exec=...%F/%U` file-argument placeholders; writes cleaned per-user copies to `~/.local/share/applications`
 - **v1.7.0** — Add automatic security updates section: linux-image-amd64, intel-microcode, unattended-upgrades (extended to -updates pocket and VS Code repo), needrestart, fwupd with timer, AppArmor check
 - **v1.6.3** — Align window title to the left for macOS style in themes.sh
 - **v1.6.2** — Fix FaceTime HD webcam driver re-installing on every run; replace unreliable modinfo check with direct find on module path
