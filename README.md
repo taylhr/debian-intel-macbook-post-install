@@ -10,6 +10,23 @@ look and feel.
 
 ---
 
+## Quick Start
+
+> Make sure you have read [Prerequisites](#prerequisites) first — sudo
+> must be configured and you need a working internet connection.
+
+**Setup script** (required):
+
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.1/setup.sh)
+
+**Theming script** (optional, run after first reboot):
+
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.1/themes.sh)
+
+Jump to: [Compatibility](#-compatibility-notice) · [Who This Is For](#who-this-is-for) · [What It Installs](#what-this-script-installs-and-configures) · [Prerequisites](#prerequisites) · [Installation](#installation) · [Theming](#theming-optional) · [Version History](#version-history)
+
+---
+
 ## ⚠️ Compatibility Notice
 
 **This script is for Intel MacBooks only.**
