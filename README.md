@@ -23,7 +23,39 @@ look and feel.
 
     bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.1/themes.sh)
 
-Jump to: [Compatibility](#-compatibility-notice) · [Who This Is For](#who-this-is-for) · [What It Installs](#what-this-script-installs-and-configures) · [Prerequisites](#prerequisites) · [Installation](#installation) · [Theming](#theming-optional) · [Version History](#version-history)
+---
+
+## Contents
+
+- [Compatibility Notice](#-compatibility-notice)
+- [The Story So Far](#the-story-so-far)
+- [Why Debian on an Intel MacBook](#why-debian-on-an-intel-macbook)
+- [Who This Is For](#who-this-is-for)
+- [What This Script Installs and Configures](#what-this-script-installs-and-configures)
+  - [Automatic Security Updates](#automatic-security-updates)
+  - [Desktop Environment](#desktop-environment)
+  - [Terminal](#terminal)
+  - [Browser and Core Apps](#browser-and-core-apps)
+  - [Code Editor](#code-editor)
+  - [Media and Utilities](#media-and-utilities)
+  - [WiFi Management](#wifi-management)
+  - [MacBook Keyboard Fixes](#macbook-keyboard-fixes)
+  - [Webcam and Microphone](#webcam-and-microphone)
+  - [Battery and Power](#battery-and-power)
+  - [System Monitoring](#system-monitoring)
+  - [Fonts](#fonts)
+  - [App Finder Launcher Fix](#app-finder-launcher-fix)
+  - [Desktop Shortcuts](#desktop-shortcuts)
+  - [Keyboard Shortcuts Cheat Sheet](#keyboard-shortcuts-cheat-sheet)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Theming (optional)](#theming-optional)
+- [Verified Test Environment](#verified-test-environment)
+- [Known Limitations](#known-limitations)
+- [Related](#related)
+- [Version History](#version-history)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
