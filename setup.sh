@@ -729,11 +729,16 @@ echo -e "  ${CYAN}Configuring power behavior (suspend + automatic hibernate).${N
 install_pkg "xfce4-battery-plugin" "Battery indicator plugin"
 install_pkg "xfce4-power-manager" "Power manager"
 
-print_info "Configuring lid close to suspend and lock screen..."
+print_info "Configuring lid + screen lock, and delegating the lid to logind..."
 xfconf_set -c xfce4-power-manager -p /xfce4-power-manager/lid-action-on-ac -s 2 --create -t int
 xfconf_set -c xfce4-power-manager -p /xfce4-power-manager/lid-action-on-battery -s 2 --create -t int
 xfconf_set -c xfce4-power-manager -p /xfce4-power-manager/lock-screen-suspend-hibernate -s true --create -t bool
-print_ok "XFCE configured — lid close triggers suspend only"
+# Hand the lid switch to systemd-logind: XFCE has no native suspend-then-hibernate
+# lid action, so we let logind own it. With this true, XFCE drops its lid inhibitor
+# and logind's HandleLidSwitch= (set below) takes over. The lid-action-* values
+# above then become inert fallbacks. See https://docs.xfce.org/xfce/xfce4-power-manager/faq
+xfconf_set -c xfce4-power-manager -p /xfce4-power-manager/logind-handle-lid-switch -s true --create -t bool
+print_ok "XFCE configured — lid handling delegated to logind"
 
 # kernel (suspend mechanism layer)
 # Intel MacBooks (Broadwell, e.g. MacBookAir7,2) default to deep/S3 suspend,
@@ -763,6 +768,23 @@ HibernateDelaySec=30min
 MemorySleepMode=s2idle
 EOF
 print_ok "systemd configured — s2idle suspend → hibernate after 30 minutes"
+
+# logind (lid policy layer)
+# logind now owns the lid (see logind-handle-lid-switch above). suspend-then-
+# hibernate = s2idle first for fast resume, then hibernate to swap after
+# HibernateDelaySec — so a long/overnight close can't drain the battery flat and
+# lose work. logind-initiated lid actions bypass polkit, so the hibernate-blocking
+# rule below does not interfere. Applies on next reboot (no logind restart, which
+# would kill the session).
+print_info "Configuring logind: lid close → suspend-then-hibernate..."
+sudo mkdir -p /etc/systemd/logind.conf.d
+sudo tee /etc/systemd/logind.conf.d/10-lid.conf > /dev/null << 'EOF'
+[Login]
+HandleLidSwitch=suspend-then-hibernate
+HandleLidSwitchExternalPower=suspend-then-hibernate
+HandleLidSwitchDocked=ignore
+EOF
+print_ok "logind configured — lid → suspend-then-hibernate (effective after reboot)"
 
 # polkit (authority / safety layer)
 print_info "Restricting user-space hibernate requests (XFCE)..."
