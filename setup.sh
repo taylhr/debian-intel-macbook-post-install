@@ -735,15 +735,34 @@ xfconf_set -c xfce4-power-manager -p /xfce4-power-manager/lid-action-on-battery 
 xfconf_set -c xfce4-power-manager -p /xfce4-power-manager/lock-screen-suspend-hibernate -s true --create -t bool
 print_ok "XFCE configured — lid close triggers suspend only"
 
+# kernel (suspend mechanism layer)
+# Intel MacBooks (Broadwell, e.g. MacBookAir7,2) default to deep/S3 suspend,
+# which enters fine but never resumes — the machine is dead on lid-open until a
+# hard power-off. Force s2idle (suspend-to-idle), which resumes reliably on this
+# firmware. See https://github.com/basecamp/omarchy/issues/1840
+if ! grep -q "mem_sleep_default=s2idle" /etc/default/grub; then
+    print_info "Forcing s2idle suspend via kernel parameter (deep/S3 won't resume on this hardware)..."
+    sudo sed -i 's/^\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)"/\1 mem_sleep_default=s2idle"/' /etc/default/grub
+    sudo update-grub
+    print_ok "Kernel set to s2idle suspend (takes full effect after reboot)"
+    REBOOT_REQUIRED=true
+else
+    print_skip "s2idle kernel parameter already set"
+fi
+
 # systemd (power policy layer)
-print_info "Configuring systemd suspend-then-hibernate..."
+# MemorySleepMode=s2idle makes systemd write s2idle to /sys/power/mem_sleep on
+# every mem suspend, so the fix holds even before the next reboot / if GRUB is
+# regenerated without the param.
+print_info "Configuring systemd suspend-then-hibernate (s2idle)..."
 sudo mkdir -p /etc/systemd
 sudo tee /etc/systemd/sleep.conf > /dev/null << 'EOF'
 [Sleep]
 AllowSuspendThenHibernate=yes
 HibernateDelaySec=30min
+MemorySleepMode=s2idle
 EOF
-print_ok "systemd configured — suspend → hibernate after 30 minutes"
+print_ok "systemd configured — s2idle suspend → hibernate after 30 minutes"
 
 # polkit (authority / safety layer)
 print_info "Restricting user-space hibernate requests (XFCE)..."
