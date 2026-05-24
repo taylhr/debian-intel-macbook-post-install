@@ -1,5 +1,41 @@
 # Debian Linux Post-Installation Setup for Intel MacBooks
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Contents](#contents)
+- [⚠️ Compatibility Notice](#-compatibility-notice)
+- [The Story So Far](#the-story-so-far)
+- [Why Debian on an Intel MacBook](#why-debian-on-an-intel-macbook)
+- [Who This Is For](#who-this-is-for)
+- [What This Script Installs and Configures](#what-this-script-installs-and-configures)
+  - [Automatic Security Updates](#automatic-security-updates)
+  - [Desktop Environment](#desktop-environment)
+  - [Terminal](#terminal)
+  - [Browser and Core Apps](#browser-and-core-apps)
+  - [Code Editor](#code-editor)
+  - [Media and Utilities](#media-and-utilities)
+  - [WiFi Management](#wifi-management)
+  - [MacBook Keyboard Fixes](#macbook-keyboard-fixes)
+  - [Webcam and Microphone](#webcam-and-microphone)
+  - [Battery and Power](#battery-and-power)
+  - [System Monitoring](#system-monitoring)
+  - [Fonts](#fonts)
+  - [App Finder Launcher Fix](#app-finder-launcher-fix)
+  - [Desktop Shortcuts](#desktop-shortcuts)
+  - [Keyboard Shortcuts Cheat Sheet](#keyboard-shortcuts-cheat-sheet)
+- [Prerequisites](#prerequisites)
+  - [1. Working internet connection](#1-working-internet-connection)
+  - [2. Set up sudo for your user](#2-set-up-sudo-for-your-user)
+- [Installation](#installation)
+- [Theming (optional)](#theming-optional)
+- [Verified Test Environment](#verified-test-environment)
+- [Known Limitations](#known-limitations)
+- [Related](#related)
+- [Version History](#version-history)
+- [Contributing](#contributing)
+- [License](#license)
+
 A post-installation setup script for Intel MacBooks running Debian GNU/Linux
 13 (Trixie). This picks up exactly where the Broadcom offline repo leaves
 off — WiFi is working, you have a terminal, and now it is time to turn this
@@ -17,11 +53,11 @@ look and feel.
 
 **Setup script** (required):
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.1/setup.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.2/setup.sh)
 
 **Theming script** (optional, run after first reboot):
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.1/themes.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.2/themes.sh)
 
 ---
 
@@ -288,7 +324,7 @@ If you see "sudo is working" you are ready.
 
 Run this single command as your regular user, not as root:
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.1/setup.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.2/setup.sh)
 
 The script prints progress for every step. Estimated time: 20–40 minutes
 depending on internet speed. LibreOffice alone is ~300MB.
@@ -304,7 +340,7 @@ WhiteSur dark GTK theme, macOS-style window controls on the left, and a
 Plank dock at the bottom — run this after the setup script completes and
 you have rebooted into the desktop:
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.1/themes.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.2/themes.sh)
 
 You will be prompted to choose a mode:
 
@@ -352,6 +388,7 @@ https://github.com/willardcsoriano/debian-trixie-intel-macbook-broadcom-offline
 
 ## Version History
 
+- **v1.7.2** — Fix suspend/resume on Intel MacBooks: force `s2idle` (deep/S3 never resumes on this hardware, leaving the machine dead on lid-open until a hard power-off) via the `mem_sleep_default=s2idle` kernel parameter and `MemorySleepMode=s2idle`; delegate the lid to logind for `suspend-then-hibernate` so a long/overnight close hibernates instead of draining the battery flat
 - **v1.7.1** — Fix App Finder launches for apps whose `.desktop` files declare `Exec=...%F/%U` file-argument placeholders; writes cleaned per-user copies to `~/.local/share/applications`
 - **v1.7.0** — Add automatic security updates section: linux-image-amd64, intel-microcode, unattended-upgrades (extended to -updates pocket and VS Code repo), needrestart, fwupd with timer, AppArmor check
 - **v1.6.3** — Align window title to the left for macOS style in themes.sh
