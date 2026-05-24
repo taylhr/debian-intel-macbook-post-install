@@ -623,6 +623,41 @@ echo -e "  • Cmd+Left/Right jumps to start/end of line"
 echo -e "  • Cmd+Up/Down jumps to start/end of document\n"
 
 # ─────────────────────────────────────────────
+# TOUCHPAD RESUME FIX
+# ─────────────────────────────────────────────
+print_header "MacBook Touchpad Resume Fix"
+echo -e "  ${CYAN}Keeping the bcm5974 trackpad alive across lid-close and resume.${NC}\n"
+
+# The bcm5974 trackpad re-enumerates as a USB device on lid-open/resume. When it
+# reconnects, xfsettingsd replays stored xinput properties — and if it has a stale
+# Device_Enabled=0, it disables the trackpad before anything can re-enable it,
+# leaving a dead pad until reboot. Fix is two parts: clear the stored disabled
+# state, and add a sleep hook that force-enables the device after it settles.
+
+# 1. Stop XFCE from storing/replaying Device_Enabled=0
+xfconf_set -c pointers -p /bcm5974/Properties/Device_Enabled -s 1 --create -t int
+print_ok "Cleared any stale XFCE trackpad-disabled state"
+
+# 2. systemd sleep hook — re-enable the trackpad after resume
+print_info "Installing resume hook /etc/systemd/system-sleep/touchpad-resume..."
+sudo mkdir -p /etc/systemd/system-sleep
+sudo tee /etc/systemd/system-sleep/touchpad-resume > /dev/null << 'EOF'
+#!/bin/sh
+# Re-enable bcm5974 touchpad after resume.
+# xfsettingsd replays stored xinput properties on device reconnect; if it has
+# Device_Enabled=0 stored, it disables the touchpad before xorg.conf.d can
+# re-enable it. This hook runs after the device settles and forces it back on.
+[ "$1" = "post" ] && [ "$2" = "resume" ] || exit 0
+sleep 2
+XUSER=$(who | awk '/:0/{print $1; exit}')
+[ -z "$XUSER" ] && exit 0
+XAUTH="/home/$XUSER/.Xauthority"
+su "$XUSER" -c "DISPLAY=:0 XAUTHORITY=$XAUTH xinput enable bcm5974" 2>/dev/null || true
+EOF
+sudo chmod +x /etc/systemd/system-sleep/touchpad-resume
+print_ok "Trackpad will re-enable automatically after lid-open/resume"
+
+# ─────────────────────────────────────────────
 # WEBCAM AND MICROPHONE
 # ─────────────────────────────────────────────
 print_header "Webcam and Microphone"

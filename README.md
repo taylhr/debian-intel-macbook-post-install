@@ -17,6 +17,7 @@
   - [Media and Utilities](#media-and-utilities)
   - [WiFi Management](#wifi-management)
   - [MacBook Keyboard Fixes](#macbook-keyboard-fixes)
+  - [MacBook Touchpad Resume Fix](#macbook-touchpad-resume-fix)
   - [Webcam and Microphone](#webcam-and-microphone)
   - [Battery and Power](#battery-and-power)
   - [System Monitoring](#system-monitoring)
@@ -35,16 +36,6 @@
 - [Version History](#version-history)
 - [Contributing](#contributing)
 - [License](#license)
-
-A post-installation setup script for Intel MacBooks running Debian GNU/Linux
-13 (Trixie). This picks up exactly where the Broadcom offline repo leaves
-off — WiFi is working, you have a terminal, and now it is time to turn this
-machine into something you can actually use every day.
-
-An optional theming script is also available to give XFCE a macOS-style
-look and feel.
-
----
 
 ## Quick Start
 
@@ -242,6 +233,18 @@ Full key mapping applied:
 | Cmd+Shift+Up / Down | Select to start / end of document |
 | Cmd+Backspace | Delete entire line left of cursor |
 
+### MacBook Touchpad Resume Fix
+The bcm5974 trackpad re-enumerates as a USB device every time the lid opens
+after suspend. When it reconnects, XFCE's settings daemon (xfsettingsd) replays
+its stored input properties — and if it has a stale `Device_Enabled=0`, it
+disables the trackpad before anything can turn it back on, leaving a dead pad
+until reboot. This script clears that stored state and installs a systemd sleep
+hook that force-enables the trackpad after each resume.
+
+This covers only re-enabling the trackpad. For personal touchpad *preferences*
+(tap-to-click, natural scrolling, cursor acceleration), see the
+[dotfiles](https://github.com/willardcsoriano/dotfiles) repo below.
+
 ### Webcam and Microphone
 The FaceTime HD camera in Intel MacBooks connects via PCIe, not USB. It
 requires a reverse-engineered driver that is not included in the Linux
@@ -383,6 +386,10 @@ different mode or choose Revert.
 
 Step 1 — get WiFi working before running this script:
 https://github.com/willardcsoriano/debian-trixie-intel-macbook-broadcom-offline
+
+Optional — personal touchpad preferences (tap-to-click, natural scrolling,
+cursor acceleration) on top of the resume fix this script installs:
+https://github.com/willardcsoriano/dotfiles
 
 ---
 
