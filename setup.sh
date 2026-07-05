@@ -1181,7 +1181,11 @@ echo -e "\n${CYAN}  Full log saved to: $LOG_FILE${NC}"
 # NEXT STEPS
 # ─────────────────────────────────────────────
 echo -e "\n${BLUE}${BOLD}══════════════════════════════════════════${NC}"
-echo -e "${BLUE}${BOLD}  All done! Just reboot when ready.${NC}"
+if [ "$REBOOT_REQUIRED" = true ]; then
+    echo -e "${BLUE}${BOLD}  All done! Just reboot when ready.${NC}"
+else
+    echo -e "${BLUE}${BOLD}  All done! Your MacBook is ready to use.${NC}"
+fi
 echo -e "${BLUE}${BOLD}══════════════════════════════════════════${NC}\n"
 echo -e "  ${CYAN}A clean panel (app menu, window icons, WiFi, volume, battery, clock) will appear on first login.${NC}"
 echo -e "  ${CYAN}Your saved WiFi password will be picked up automatically.${NC}"
