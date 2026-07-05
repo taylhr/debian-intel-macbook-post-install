@@ -1,9 +1,23 @@
 # Debian Linux Post-Installation Setup for Intel MacBooks
 
+## Overview
+
+A one-command post-installation setup for Intel MacBooks (2012–2019 models)
+running Debian GNU/Linux 13 (Trixie). It picks up where the Broadcom offline
+WiFi install leaves off — a bare terminal — and turns the machine into a
+daily-usable laptop: an XFCE desktop, automatic security updates, a hardened
+Broadcom WiFi rebuild chain, NetworkManager, macOS-style keyboard remapping via
+keyd, working suspend/resume (s2idle plus lid suspend-then-hibernate), a bcm5974
+touchpad resume fix, the reverse-engineered FaceTime HD webcam and microphone
+drivers, and a curated set of everyday applications. An optional theming script
+gives XFCE a macOS-style look — the WhiteSur dark theme and a Plank dock — with
+Classic, Dock, and Revert modes. Both scripts are idempotent and safe to re-run.
+Apple Silicon Macs are not supported; use the Asahi Linux project instead.
+
 ## Table of Contents
 
+- [Overview](#overview)
 - [Quick Start](#quick-start)
-- [Contents](#contents)
 - [⚠️ Compatibility Notice](#-compatibility-notice)
 - [The Story So Far](#the-story-so-far)
 - [Why Debian on an Intel MacBook](#why-debian-on-an-intel-macbook)
@@ -49,40 +63,6 @@
 **Theming script** (optional, run after first reboot):
 
     bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.2/themes.sh)
-
----
-
-## Contents
-
-- [Compatibility Notice](#-compatibility-notice)
-- [The Story So Far](#the-story-so-far)
-- [Why Debian on an Intel MacBook](#why-debian-on-an-intel-macbook)
-- [Who This Is For](#who-this-is-for)
-- [What This Script Installs and Configures](#what-this-script-installs-and-configures)
-  - [Automatic Security Updates](#automatic-security-updates)
-  - [Desktop Environment](#desktop-environment)
-  - [Terminal](#terminal)
-  - [Browser and Core Apps](#browser-and-core-apps)
-  - [Code Editor](#code-editor)
-  - [Media and Utilities](#media-and-utilities)
-  - [WiFi Management](#wifi-management)
-  - [MacBook Keyboard Fixes](#macbook-keyboard-fixes)
-  - [Webcam and Microphone](#webcam-and-microphone)
-  - [Battery and Power](#battery-and-power)
-  - [System Monitoring](#system-monitoring)
-  - [Fonts](#fonts)
-  - [App Finder Launcher Fix](#app-finder-launcher-fix)
-  - [Desktop Shortcuts](#desktop-shortcuts)
-  - [Keyboard Shortcuts Cheat Sheet](#keyboard-shortcuts-cheat-sheet)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Theming (optional)](#theming-optional)
-- [Verified Test Environment](#verified-test-environment)
-- [Known Limitations](#known-limitations)
-- [Related](#related)
-- [Version History](#version-history)
-- [Contributing](#contributing)
-- [License](#license)
 
 ---
 
