@@ -78,8 +78,11 @@ by the separate Asahi Linux project.
 
 Ubuntu and Linux Mint are not tested and not officially supported. Most
 apt-based steps will likely work, but keyd availability varies by Ubuntu
-version and may require a PPA. The facetimehd driver builds from source
-via DKMS and should work on any kernel as long as headers are installed.
+version and may require a PPA. The facetimehd driver is built from upstream
+source via DKMS and generally tracks current kernels, but kernel API changes
+have broken it before (notably Trixie's 6.12 kernel, which dropped the
+`videobuf-dma-sg.h` header) — it relies on the latest upstream master carrying
+the fix, which it currently does.
 If you test this on Ubuntu or Mint, open an issue with your results.
 
 Tested on MacBook Air 7,2 (2015, 13-inch). Should work on most Intel
