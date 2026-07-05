@@ -59,11 +59,11 @@ Apple Silicon Macs are not supported; use the Asahi Linux project instead.
 
 **Setup script** (required):
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.3/setup.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.4/setup.sh)
 
 **Theming script** (optional, run after first reboot):
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.3/themes.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.4/themes.sh)
 
 ---
 
@@ -320,7 +320,7 @@ If you see "sudo is working" you are ready.
 
 Run this single command as your regular user, not as root:
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.3/setup.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.4/setup.sh)
 
 The script prints progress for every step. Estimated time: 20–40 minutes
 depending on internet speed. LibreOffice alone is ~300MB.
@@ -336,7 +336,7 @@ WhiteSur dark GTK theme, macOS-style window controls on the left, and a
 Plank dock at the bottom — run this after the setup script completes and
 you have rebooted into the desktop:
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.3/themes.sh)
+    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.7.4/themes.sh)
 
 You will be prompted to choose a mode:
 
@@ -388,6 +388,7 @@ https://github.com/willardcsoriano/dotfiles
 
 ## Version History
 
+- **v1.7.4** — Add an optional, off-by-default `apt full-upgrade` step (runs last so a new kernel triggers automatic DKMS driver rebuilds; flags a reboot when the running kernel is superseded)
 - **v1.7.3** — Correct the stale post-install repo name in `setup.sh` branding and comments; restore the README intro as an Overview and drop the duplicate contents list; document the facetimehd kernel 6.12 build caveat; bump the verified environment to Debian 13.5
 - **v1.7.2** — Fix suspend/resume on Intel MacBooks: force `s2idle` (deep/S3 never resumes on this hardware, leaving the machine dead on lid-open until a hard power-off) via the `mem_sleep_default=s2idle` kernel parameter and `MemorySleepMode=s2idle`; delegate the lid to logind for `suspend-then-hibernate` so a long/overnight close hibernates instead of draining the battery flat
 - **v1.7.1** — Fix App Finder launches for apps whose `.desktop` files declare `Exec=...%F/%U` file-argument placeholders; writes cleaned per-user copies to `~/.local/share/applications`
