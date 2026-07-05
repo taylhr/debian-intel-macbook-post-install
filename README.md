@@ -24,6 +24,7 @@ Apple Silicon Macs are not supported; use the Asahi Linux project instead.
 - [Who This Is For](#who-this-is-for)
 - [What This Script Installs and Configures](#what-this-script-installs-and-configures)
   - [Automatic Security Updates](#automatic-security-updates)
+  - [System Upgrade (optional)](#system-upgrade-optional)
   - [Desktop Environment](#desktop-environment)
   - [Terminal](#terminal)
   - [Browser and Core Apps](#browser-and-core-apps)
@@ -143,6 +144,15 @@ If you have not yet gotten WiFi working, start [here](https://github.com/willard
 - fwupd + fwupd-refresh.timer — UEFI and firmware updates via LVFS, refreshed
   automatically on a timer
 - AppArmor verified active (ships enabled on Debian 13, warns if disabled)
+
+### System Upgrade (optional)
+Near the end, the script offers to run a full `apt full-upgrade` to bring every
+package up to the latest Debian 13 point release. It is **off by default** —
+security updates already install automatically via unattended-upgrades, so
+skipping it is safe, and pressing Enter (or a non-interactive run) skips it. If
+you accept and a new kernel is installed, the Broadcom and FaceTime HD DKMS
+drivers rebuild for it automatically and the script flags a reboot — verify WiFi
+and the webcam after rebooting.
 
 ### Desktop Environment
 - xorg — display server
