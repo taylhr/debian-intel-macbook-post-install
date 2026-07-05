@@ -341,7 +341,7 @@ different mode or choose Revert.
 | Component | Details |
 |---|---|
 | **Machine** | Apple MacBookAir7,2 (Mid-2015, 13-inch) |
-| **OS** | Debian GNU/Linux 13 (Trixie) 13.4 |
+| **OS** | Debian GNU/Linux 13 (Trixie) 13.5 |
 | **Kernel** | 6.12.73+deb13-amd64 |
 | **CPU** | Intel Core i5-5350U @ 1.80GHz (2 cores, 4 threads, up to 2.9GHz) |
 | **RAM** | 8GB |
