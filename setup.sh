@@ -1111,6 +1111,46 @@ else
 fi
 
 # ─────────────────────────────────────────────
+# OPTIONAL SYSTEM UPGRADE
+# ─────────────────────────────────────────────
+# Runs last, after every DKMS driver (Broadcom wl, facetimehd) is already
+# registered — so if this pulls a new kernel, its post-install triggers a DKMS
+# rebuild of those drivers for the new kernel automatically. Upgrading earlier
+# would leave the webcam driver built only for the old running kernel.
+print_header "System Upgrade (optional)"
+echo -e "  ${CYAN}Optionally upgrade every installed package to the latest Debian 13 point release.${NC}\n"
+echo -e "  ${YELLOW}Safe to skip: security updates already install automatically via"
+echo -e "  unattended-upgrades. A full upgrade can download a lot and may install a"
+echo -e "  new kernel — the Broadcom/webcam DKMS drivers rebuild for it automatically,"
+echo -e "  but you must reboot to use it.${NC}\n"
+
+read -p "$(echo -e ${BOLD}"  Run a full system upgrade now? [y/N] "${NC})" do_upgrade
+if [[ "$do_upgrade" =~ ^[Yy]$ ]]; then
+    RUNNING_KERNEL=$(uname -r)
+    print_info "Upgrading all packages (this can take a while)..."
+    log "apt full-upgrade"
+    if sudo apt full-upgrade -y >>"$LOG_FILE" 2>&1; then
+        print_ok "System upgraded to the latest available packages"
+        INSTALLED+=("System upgrade (apt full-upgrade)")
+        sudo apt autoremove -y >>"$LOG_FILE" 2>&1 || true
+    else
+        print_fail "System upgrade (see $LOG_FILE)"
+        FAILED+=("System upgrade")
+    fi
+    # A newer kernel only becomes active after a reboot; flag it so the reboot
+    # prompt fires and the DKMS drivers run on the kernel you actually boot into.
+    NEWEST_KERNEL=$(ls -1 /boot/vmlinuz-* 2>/dev/null | sed 's|.*/vmlinuz-||' | sort -V | tail -1)
+    if [ -n "$NEWEST_KERNEL" ] && [ "$NEWEST_KERNEL" != "$RUNNING_KERNEL" ]; then
+        REBOOT_REQUIRED=true
+        print_warning "New kernel installed ($NEWEST_KERNEL) — reboot to activate it,"
+        print_warning "then verify WiFi and the webcam still work."
+    fi
+else
+    print_skip "System upgrade"
+    SKIPPED+=("System upgrade")
+fi
+
+# ─────────────────────────────────────────────
 # SUMMARY
 # ─────────────────────────────────────────────
 print_header "Installation Summary"
