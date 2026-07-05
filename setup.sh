@@ -2,7 +2,7 @@
 # setup.sh
 # Post-installation setup for Debian 13 (Trixie) on Intel MacBooks
 # Tested on MacBook Air 7,2 (2015) — should work on most Intel MacBooks
-# https://github.com/willardcsoriano/debian-macbook-post-install
+# https://github.com/willardcsoriano/debian-intel-macbook-post-install
 
 set -uo pipefail
 
@@ -168,7 +168,7 @@ SHORTCUT
 # ─────────────────────────────────────────────
 echo -e "\n${BOLD}${BLUE}"
 echo "  ╔══════════════════════════════════════════╗"
-echo "  ║   debian-macbook-post-install            ║"
+echo "  ║   debian-intel-macbook-post-install      ║"
 echo "  ║   Intel MacBooks · Debian 13 Trixie      ║"
 echo "  ║   github.com/willardcsoriano             ║"
 echo "  ╚══════════════════════════════════════════╝"
@@ -891,7 +891,7 @@ create_shortcut "VS Code" "code" "code"
 
 cat > "$ACTUAL_HOME/Desktop/KEYBOARD SHORTCUTS.txt" << 'SHORTCUTS'
 ═══════════════════════════════════════════════════════
-  KEYBOARD SHORTCUTS — debian-macbook-post-install
+  KEYBOARD SHORTCUTS — debian-intel-macbook-post-install
   Intel MacBooks · Debian 13 Trixie · XFCE
 ═══════════════════════════════════════════════════════
 
