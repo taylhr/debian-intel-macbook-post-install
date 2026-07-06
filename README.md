@@ -147,12 +147,16 @@ If you have not yet gotten WiFi working, start [here](https://github.com/willard
 
 ### System Upgrade (optional)
 Near the end, the script offers to run a full `apt full-upgrade` to bring every
-package up to the latest Debian 13 point release. It is **off by default** —
+package up to the latest Debian 13 point release. It first simulates the upgrade
+and, when nothing is pending, reports the system as up to date and skips the
+prompt entirely. When updates are available it is still **off by default** —
 security updates already install automatically via unattended-upgrades, so
 skipping it is safe, and pressing Enter (or a non-interactive run) skips it. If
 you accept and a new kernel is installed, the Broadcom and FaceTime HD DKMS
 drivers rebuild for it automatically and the script flags a reboot — verify WiFi
-and the webcam after rebooting.
+and the webcam after rebooting. The summary closes with a **System status** line
+reporting one of: fully up to date, upgraded, or — if you declined pending
+updates — a warning with the `sudo apt full-upgrade` command to catch up later.
 
 ### Desktop Environment
 - xorg — display server
@@ -175,6 +179,9 @@ and the webcam after rebooting.
 ### Code Editor
 - code (Visual Studio Code) — installed from Microsoft's official apt
   repository so it stays current via normal apt updates
+- agy (Google Antigravity CLI) — agentic coding CLI installed to
+  `~/.local/bin` via the official upstream installer (user-space, no root;
+  self-updates in the background). Run `agy` and sign in with a Google account.
 
 ### Media and Utilities
 - flameshot — screenshot tool with annotation support. Shortcut: Ctrl+Alt+S
