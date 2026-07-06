@@ -490,6 +490,36 @@ install_pkg "code" "Visual Studio Code"
 
 
 # ─────────────────────────────────────────────
+# GOOGLE ANTIGRAVITY CLI
+# ─────────────────────────────────────────────
+print_header "Google Antigravity CLI"
+echo -e "  ${CYAN}Installing the Antigravity agentic coding CLI (agy) — user-space, no root.${NC}\n"
+
+# Prereqs for the official installer: it fetches over HTTPS and verifies a
+# SHA512 checksum, so curl + CA certs + tar (+ coreutils sha512sum) must exist.
+install_pkgs "Antigravity CLI prerequisites" curl ca-certificates tar
+
+# agy lands in the invoking user's ~/.local/bin (this script runs as that user,
+# never root). The upstream installer is itself idempotent — it exits early if
+# agy is present — but we check first to skip the network round-trip on re-runs.
+AGY_BIN="$ACTUAL_HOME/.local/bin/agy"
+if [ -x "$AGY_BIN" ]; then
+    print_skip "Google Antigravity CLI (agy)"
+    SKIPPED+=("Google Antigravity CLI (agy)")
+else
+    print_info "Downloading Antigravity CLI (verifies a SHA512 checksum before install)..."
+    log "antigravity cli install"
+    if curl -fsSL https://antigravity.google/cli/install.sh | bash >>"$LOG_FILE" 2>&1; then
+        print_ok "Google Antigravity CLI installed to ~/.local/bin/agy"
+        INSTALLED+=("Google Antigravity CLI (agy)")
+        print_info "Open a new terminal, run 'agy', and sign in with your Google account."
+    else
+        print_fail "Google Antigravity CLI (agy)"
+        FAILED+=("Google Antigravity CLI (agy)")
+    fi
+fi
+
+# ─────────────────────────────────────────────
 # MEDIA AND UTILITIES
 # ─────────────────────────────────────────────
 print_header "Media and Utilities"
