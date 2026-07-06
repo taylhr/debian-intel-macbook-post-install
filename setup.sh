@@ -31,6 +31,10 @@ SKIPPED=()
 FAILED=()
 REBOOT_REQUIRED=false
 HAS_DBUS=true
+# Optional system-upgrade status, rendered as its own summary block (it's a
+# system-currency status, not a package): current | upgraded | declined | failed
+UPGRADE_STATE="current"
+UPGRADE_COUNT=0
 
 # ─────────────────────────────────────────────
 # HELPERS
@@ -1125,9 +1129,9 @@ print_header "System Upgrade (optional)"
 UPGRADE_COUNT=$(apt-get -s full-upgrade 2>/dev/null | grep -cE '^(Inst|Remv) ')
 
 if [ "$UPGRADE_COUNT" -eq 0 ]; then
+    UPGRADE_STATE="current"
     echo -e "  ${CYAN}Every installed package is already at the latest Debian 13 point release.${NC}\n"
-    print_skip "System upgrade — already up to date"
-    SKIPPED+=("System upgrade — already up to date")
+    print_ok "Nothing to upgrade"
 else
     echo -e "  ${CYAN}$UPGRADE_COUNT package(s) can be upgraded to the latest Debian 13 point release.${NC}\n"
     echo -e "  ${YELLOW}Safe to skip: security updates already install automatically via"
@@ -1141,12 +1145,12 @@ else
         print_info "Upgrading all packages (this can take a while)..."
         log "apt full-upgrade"
         if sudo apt full-upgrade -y >>"$LOG_FILE" 2>&1; then
+            UPGRADE_STATE="upgraded"
             print_ok "System upgraded to the latest available packages"
-            INSTALLED+=("System upgrade (apt full-upgrade)")
             sudo apt autoremove -y >>"$LOG_FILE" 2>&1 || true
         else
-            print_fail "System upgrade (see $LOG_FILE)"
-            FAILED+=("System upgrade")
+            UPGRADE_STATE="failed"
+            echo -e "${RED}  ✘ System upgrade failed — see $LOG_FILE${NC}"
         fi
         # A newer kernel only becomes active after a reboot; flag it so the reboot
         # prompt fires and the DKMS drivers run on the kernel you actually boot into.
@@ -1157,8 +1161,11 @@ else
             print_warning "then verify WiFi and the webcam still work."
         fi
     else
-        print_skip "System upgrade"
-        SKIPPED+=("System upgrade")
+        # Declined with updates pending: this machine is knowingly behind, so warn
+        # (not a neutral skip) and hand over the one command to catch up later.
+        UPGRADE_STATE="declined"
+        print_warning "$UPGRADE_COUNT update(s) available but not applied"
+        print_warning "Apply later with: sudo apt full-upgrade"
     fi
 fi
 
@@ -1186,6 +1193,27 @@ if [ ${#FAILED[@]} -gt 0 ]; then
     done
     echo -e "\n${RED}  Some items failed. Full details in: $LOG_FILE${NC}"
 fi
+
+# System-currency status — rendered on its own, not lumped in with the package
+# tallies, because "is this system up to date?" is a different question from
+# "is this package installed?".
+echo -e "\n${BOLD}  System status${NC}"
+case "$UPGRADE_STATE" in
+    upgraded)
+        echo -e "  ${GREEN}✔ System upgraded — $UPGRADE_COUNT package(s) updated this run${NC}"
+        ;;
+    declined)
+        echo -e "  ${YELLOW}⚠ $UPGRADE_COUNT update(s) available — not applied${NC}"
+        echo -e "  ${YELLOW}  Apply later with:  sudo apt full-upgrade${NC}"
+        ;;
+    failed)
+        echo -e "  ${RED}✘ System upgrade failed — see the log below${NC}"
+        echo -e "  ${RED}  Retry later with:  sudo apt full-upgrade${NC}"
+        ;;
+    *)
+        echo -e "  ${GREEN}✔ Fully up to date${NC}"
+        ;;
+esac
 
 echo -e "\n${CYAN}  Full log saved to: $LOG_FILE${NC}"
 
