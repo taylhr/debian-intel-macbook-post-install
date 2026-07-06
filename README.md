@@ -179,9 +179,6 @@ updates — a warning with the `sudo apt full-upgrade` command to catch up later
 ### Code Editor
 - code (Visual Studio Code) — installed from Microsoft's official apt
   repository so it stays current via normal apt updates
-- agy (Google Antigravity CLI) — agentic coding CLI installed to
-  `~/.local/bin` via the official upstream installer (user-space, no root;
-  self-updates in the background). Run `agy` and sign in with a Google account.
 
 ### Media and Utilities
 - flameshot — screenshot tool with annotation support. Shortcut: Ctrl+Alt+S
