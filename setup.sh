@@ -673,13 +673,37 @@ else
     print_ok "dbus user session detected"
 fi
 
-BACKLIGHT_PATH="/sys/class/backlight/intel_backlight"
-if [ -f "$BACKLIGHT_PATH/max_brightness" ]; then
+# Find the real backlight device rather than assuming intel_backlight. Most
+# Intel MacBooks expose that one, but some models present acpi_video0 or
+# gmux_backlight instead, and the difference matters more than it looks: keyd
+# captures a key whether or not the command bound to it succeeds. Pointing the
+# brightness keys at a path that does not exist therefore replaces working
+# native handling with nothing at all — strictly worse than leaving them alone.
+BACKLIGHT_PATH=""
+for _bl in /sys/class/backlight/intel_backlight /sys/class/backlight/acpi_video0 \
+           /sys/class/backlight/gmux_backlight /sys/class/backlight/*; do
+    if [ -f "$_bl/brightness" ] && [ -f "$_bl/max_brightness" ]; then
+        BACKLIGHT_PATH="$_bl"
+        break
+    fi
+done
+
+if [ -n "$BACKLIGHT_PATH" ]; then
     MAX_BRIGHTNESS=$(cat "$BACKLIGHT_PATH/max_brightness")
-    print_ok "Screen backlight detected (max brightness: $MAX_BRIGHTNESS)"
+    # Step size has to be derived from the device's own range, not fixed. Ranges
+    # differ by two orders of magnitude — intel_backlight commonly reports ~2777
+    # levels while acpi_video0 reports something like 15 — so a hardcoded step
+    # either moves imperceptibly or overshoots max_brightness on the first press,
+    # and writing past max returns EINVAL and changes nothing. Aim for ~20 steps
+    # across whatever range this machine actually has.
+    BRIGHTNESS_STEP=$(( MAX_BRIGHTNESS / 20 ))
+    [ "$BRIGHTNESS_STEP" -lt 1 ] && BRIGHTNESS_STEP=1
+    print_ok "Screen backlight detected: $(basename "$BACKLIGHT_PATH") (max: $MAX_BRIGHTNESS, step: $BRIGHTNESS_STEP)"
 else
-    MAX_BRIGHTNESS=2777
-    print_warning "Could not detect backlight. Using default value of $MAX_BRIGHTNESS."
+    MAX_BRIGHTNESS=""
+    BRIGHTNESS_STEP=""
+    print_warning "No backlight device found under /sys/class/backlight/."
+    print_warning "F1/F2 will be left unmapped so whatever handles them now keeps working."
 fi
 
 ACTUAL_HOME=$(getent passwd "$USER" | cut -d: -f6)
@@ -1159,10 +1183,27 @@ dashboard = A-f2
 
 # F3 - Mission Control equivalent (rofi window switcher)
 scale = command(sh -c 'DISPLAY=:0 XAUTHORITY=$ACTUAL_HOME/.Xauthority rofi -show window -show-icons')
+EOF
 
-# Brightness keys (via sysfs)
-brightnessdown = command(sh -c 'val=\$(cat /sys/class/backlight/intel_backlight/brightness); echo \$((val > 200 ? val - 200 : 100)) | tee /sys/class/backlight/intel_backlight/brightness')
-brightnessup = command(sh -c 'val=\$(cat /sys/class/backlight/intel_backlight/brightness); echo \$((val + 200 > $MAX_BRIGHTNESS ? $MAX_BRIGHTNESS : val + 200)) | tee /sys/class/backlight/intel_backlight/brightness')
+    # Brightness keys — only when a backlight device was actually found. keyd
+    # swallows a key regardless of whether its command works, so mapping these
+    # against a missing path would leave F1/F2 doing nothing at all where they
+    # previously worked. Better to not claim the keys than to break them.
+    if [ -n "$BACKLIGHT_PATH" ]; then
+        sudo tee -a "$keyd_conf" > /dev/null << EOF
+
+# Brightness keys (sysfs: $BACKLIGHT_PATH, range 0-$MAX_BRIGHTNESS, step $BRIGHTNESS_STEP)
+# Clamped at both ends: writing outside 0..max_brightness returns EINVAL and the
+# key silently does nothing. Floor is one step rather than 0 to avoid a fully
+# dark screen on devices where 0 means off.
+brightnessdown = command(sh -c 'val=\$(cat $BACKLIGHT_PATH/brightness); new=\$((val - $BRIGHTNESS_STEP)); [ \$new -lt $BRIGHTNESS_STEP ] && new=$BRIGHTNESS_STEP; echo \$new > $BACKLIGHT_PATH/brightness')
+brightnessup = command(sh -c 'val=\$(cat $BACKLIGHT_PATH/brightness); new=\$((val + $BRIGHTNESS_STEP)); [ \$new -gt $MAX_BRIGHTNESS ] && new=$MAX_BRIGHTNESS; echo \$new > $BACKLIGHT_PATH/brightness')
+EOF
+    else
+        print_warning "No backlight device — F1/F2 left unmapped so current handling survives"
+    fi
+
+    sudo tee -a "$keyd_conf" > /dev/null << EOF
 
 # Cmd+arrow text navigation (Mac style)
 meta+left = home
@@ -1182,14 +1223,49 @@ EOF
     sudo systemctl restart keyd >>"$LOG_FILE" 2>&1 || true
     print_ok "Keyboard remapping is active"
 
+    # F10/F11/F12 emit XF86Audio* correctly on their own, but nothing acts on
+    # them unless XFCE's PulseAudio plugin is told to grab them, and that is not
+    # its default. If the plugin is already on the panel — which it is on any
+    # normal XFCE install, and on runs that select keyboard without panel —
+    # switch its key handling on wherever it happens to sit.
+    VOLUME_KEYS_OK=false
+    if $HAS_DBUS; then
+        for _plugin in $(xfconf-query -c xfce4-panel -l 2>/dev/null \
+                         | grep -E '/plugins/plugin-[0-9]+$'); do
+            if [ "$(xfconf-query -c xfce4-panel -p "$_plugin" 2>/dev/null)" = "pulseaudio" ]; then
+                xfconf_set -c xfce4-panel -p "$_plugin/enable-keyboard-shortcuts" \
+                    --create -t bool -s true
+                print_ok "Volume keys enabled on the PulseAudio panel plugin ($_plugin)"
+                VOLUME_KEYS_OK=true
+                break
+            fi
+        done
+    fi
+
     echo -e "\n  ${CYAN}Key mappings applied:${NC}"
     echo -e "  • Cmd key now works as Ctrl"
     echo -e "  • Cmd+Space / F4 opens app finder"
-    echo -e "  • F1/F2 controls screen brightness"
+    if [ -n "$BACKLIGHT_PATH" ]; then
+        echo -e "  • F1/F2 controls screen brightness"
+    else
+        echo -e "  • ${YELLOW}F1/F2 left unmapped — no backlight device found${NC}"
+    fi
     echo -e "  • F3 opens window switcher"
     echo -e "  • F5/F6 controls keyboard backlight (via kernel)"
     echo -e "  • F7/F8/F9 controls media playback (via kernel)"
-    echo -e "  • F10/F11/F12 controls volume (via kernel)"
+    # The volume keys are not a kernel function despite what this list used to
+    # claim: they emit XF86Audio* and something in userspace has to act on them.
+    # Under XFCE that is the PulseAudio panel plugin, and only while it is
+    # actually loaded in the panel.
+    if $VOLUME_KEYS_OK; then
+        echo -e "  • F10/F11/F12 controls volume (via the PulseAudio panel plugin)"
+    else
+        echo -e "  • ${YELLOW}F10/F11/F12 emit volume keycodes but nothing acts on them yet${NC}"
+        echo -e "    ${YELLOW}They need XFCE's PulseAudio plugin on your panel:${NC}"
+        echo -e "    ${YELLOW}  sudo apt install xfce4-pulseaudio-plugin${NC}"
+        echo -e "    ${YELLOW}  right-click panel > Panel > Add New Items > PulseAudio Plugin${NC}"
+        echo -e "    ${YELLOW}then re-run: setup.sh --only keyboard${NC}"
+    fi
     echo -e "  • Cmd+Left/Right jumps to start/end of line"
     echo -e "  • Cmd+Up/Down jumps to start/end of document\n"
 }
@@ -1532,6 +1608,13 @@ for spec in "${PLUGINS[@]}"; do
             xfconf-query -c xfce4-panel -p /plugins/plugin-$ID/style  --create -t uint -s 0
             xfconf-query -c xfce4-panel -p /plugins/plugin-$ID/expand --create -t bool -s true
             ;;
+        pulseaudio)
+            # Multimedia key handling is optional in this plugin and off unless
+            # asked for. Without it the F10/F11/F12 volume keys emit the right
+            # XF86Audio* codes and nothing whatsoever acts on them.
+            xfconf-query -c xfce4-panel -p /plugins/plugin-$ID/enable-keyboard-shortcuts \
+                --create -t bool -s true
+            ;;
         clock)
             xfconf-query -c xfce4-panel -p /plugins/plugin-$ID/digital-format \
                 --create -t string -s "%Y-%m-%d  %H:%M"
@@ -1670,10 +1753,15 @@ NOTE: On this setup, the Cmd key works as Ctrl.
   F7                 Previous track
   F8                 Play / Pause
   F9                 Next track
-  F10                Mute / Unmute
-  F11                Volume down
-  F12                Volume up
+  F10                Mute / Unmute      *
+  F11                Volume down        *
+  F12                Volume up          *
   Fn+F1-F12          Use as standard F1-F12 keys
+
+  * The volume keys emit the right keycodes, but something has to act
+    on them. Under XFCE that is the PulseAudio panel plugin. If they do
+    nothing, install xfce4-pulseaudio-plugin and add it to your panel:
+    right-click the panel > Panel > Add New Items > PulseAudio Plugin
 
 ───────────────────────────────────────────────────────
   SCREENSHOTS
