@@ -2,7 +2,8 @@
 # setup.sh
 # Post-installation setup for Debian 13 (Trixie) on Intel MacBooks
 # Tested on MacBook Air 7,2 (2015) — should work on most Intel MacBooks
-# https://github.com/willardcsoriano/debian-intel-macbook-post-install
+# https://github.com/taylhr/debian-intel-macbook-post-install
+# Fork of https://github.com/willardcsoriano/debian-intel-macbook-post-install
 
 set -uo pipefail
 
@@ -592,7 +593,7 @@ echo -e "\n${BOLD}${BLUE}"
 echo "  ╔══════════════════════════════════════════╗"
 echo "  ║   debian-intel-macbook-post-install      ║"
 echo "  ║   Intel MacBooks · Debian 13 Trixie      ║"
-echo "  ║   github.com/willardcsoriano             ║"
+echo "  ║   github.com/taylhr                      ║"
 echo "  ╚══════════════════════════════════════════╝"
 echo -e "${NC}\n"
 if [ ${#DISABLED_GROUPS[@]} -eq 0 ]; then

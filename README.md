@@ -70,7 +70,7 @@ Apple Silicon Macs are not supported; use the Asahi Linux project instead.
 
 **Setup script** (required):
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.8.0/setup.sh)
+    bash <(curl -s https://raw.githubusercontent.com/taylhr/debian-intel-macbook-post-install/refs/heads/master/setup.sh)
 
 That runs the full install. To install only part of it, pass options through
 to the script — see [Choosing What to Install](#choosing-what-to-install):
@@ -87,7 +87,7 @@ to the script — see [Choosing What to Install](#choosing-what-to-install):
 
 **Theming script** (optional, run after first reboot):
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.8.0/themes.sh)
+    bash <(curl -s https://raw.githubusercontent.com/taylhr/debian-intel-macbook-post-install/refs/heads/master/themes.sh)
 
 ---
 
@@ -585,7 +585,7 @@ If you see "sudo is working" you are ready.
 
 Run this single command as your regular user, not as root:
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.8.0/setup.sh)
+    bash <(curl -s https://raw.githubusercontent.com/taylhr/debian-intel-macbook-post-install/refs/heads/master/setup.sh)
 
 The script prints progress for every step. Estimated time for the full install:
 20–40 minutes depending on internet speed. LibreOffice alone is ~300MB, and the
@@ -610,7 +610,7 @@ WhiteSur dark GTK theme, macOS-style window controls on the left, and a
 Plank dock at the bottom — run this after the setup script completes and
 you have rebooted into the desktop:
 
-    bash <(curl -s https://raw.githubusercontent.com/willardcsoriano/debian-intel-macbook-post-install/v1.8.0/themes.sh)
+    bash <(curl -s https://raw.githubusercontent.com/taylhr/debian-intel-macbook-post-install/refs/heads/master/themes.sh)
 
 You will be prompted to choose a mode:
 
@@ -690,7 +690,7 @@ https://github.com/willardcsoriano/dotfiles
 - **v1.1.0** — Add gdebi package installer utility
 - **v1.0** — Initial release
 
-For full release details and downloads, see [GitHub Releases](https://github.com/willardcsoriano/debian-intel-macbook-post-install/releases).
+For full release details and downloads, see [GitHub Releases](https://github.com/taylhr/debian-intel-macbook-post-install/releases).
 
 ---
 
