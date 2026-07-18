@@ -13,18 +13,74 @@ SEARCH_DIRS=(
 # ─────────────────────────────────────────────
 # MODE SELECTION
 # ─────────────────────────────────────────────
-echo ""
-echo "  Select desktop mode:"
-echo ""
-echo "  1) Classic  — desktop icons visible, Plank shows open apps"
-echo "  2) Dock     — clean empty desktop, all apps in Plank"
-echo "  3) Revert   — remove all themes, restore vanilla XFCE"
-echo ""
-read -p "  Enter 1, 2, or 3: " MODE
+# Mode can be given up front (matching setup.sh's option style, so both scripts
+# can be driven the same way) or chosen interactively when no option is passed.
+usage() {
+    cat << USAGE
 
-if [[ "$MODE" != "1" && "$MODE" != "2" && "$MODE" != "3" ]]; then
-    echo "Invalid selection. Exiting."
-    exit 1
+  themes.sh — optional macOS-style theming for XFCE
+
+  Usage: themes.sh [options]
+
+  Options:
+    -m, --mode NAME   classic | dock | revert  (1, 2, and 3 also accepted)
+    -y, --yes         Skip the revert confirmation prompt
+    -h, --help        Show this help, then exit
+
+  Modes:
+    classic   Desktop icons visible, Plank shows open apps
+    dock      Clean empty desktop, all apps pinned in Plank
+    revert    Remove all themes, restore vanilla XFCE
+
+  With no options you are prompted to choose a mode.
+
+USAGE
+}
+
+MODE=""
+ASSUME_YES=false
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -m|--mode)
+            [ $# -ge 2 ] || { echo "  ✘ --mode needs a value" >&2; exit 1; }
+            MODE="$2"; shift 2 ;;
+        --mode=*)  MODE="${1#*=}"; shift ;;
+        -y|--yes)  ASSUME_YES=true; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *)
+            echo "  ✘ Unknown option: $1" >&2
+            echo "  Run: themes.sh --help" >&2
+            exit 1 ;;
+    esac
+done
+
+# Accept mode names as well as the historical 1/2/3 menu numbers
+case "$MODE" in
+    classic|1) MODE=1 ;;
+    dock|2)    MODE=2 ;;
+    revert|3)  MODE=3 ;;
+    "")        ;;
+    *)
+        echo "  ✘ Unknown mode: $MODE" >&2
+        echo "  Valid modes: classic, dock, revert" >&2
+        exit 1 ;;
+esac
+
+if [ -z "$MODE" ]; then
+    echo ""
+    echo "  Select desktop mode:"
+    echo ""
+    echo "  1) Classic  — desktop icons visible, Plank shows open apps"
+    echo "  2) Dock     — clean empty desktop, all apps in Plank"
+    echo "  3) Revert   — remove all themes, restore vanilla XFCE"
+    echo ""
+    read -p "  Enter 1, 2, or 3: " MODE
+
+    if [[ "$MODE" != "1" && "$MODE" != "2" && "$MODE" != "3" ]]; then
+        echo "Invalid selection. Exiting."
+        exit 1
+    fi
 fi
 
 # ─────────────────────────────────────────────
@@ -132,14 +188,18 @@ place_desktop_icons() {
 # MODE 3 — REVERT TO VANILLA XFCE
 # ─────────────────────────────────────────────
 if [[ "$MODE" == "3" ]]; then
-    echo ""
-    echo "  This will remove WhiteSur themes/icons, Plank, the docklike plugin,"
-    echo "  and reset XFCE panel/desktop config to defaults."
-    echo ""
-    read -p "  Continue? [y/N]: " CONFIRM
-    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
-        echo "Aborted."
-        exit 0
+    # Revert removes packages and deletes generated files, so it confirms by
+    # default. --yes is the explicit opt-out for unattended runs.
+    if ! $ASSUME_YES; then
+        echo ""
+        echo "  This will remove WhiteSur themes/icons, Plank, the docklike plugin,"
+        echo "  and reset XFCE panel/desktop config to defaults."
+        echo ""
+        read -p "  Continue? [y/N]: " CONFIRM
+        if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+            echo "Aborted."
+            exit 0
+        fi
     fi
 
     echo "Reverting to vanilla XFCE..."
