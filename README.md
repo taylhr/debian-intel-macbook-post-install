@@ -553,6 +553,18 @@ Confirm with:
 
     ping -c 3 google.com
 
+Being online is not the same as having a package mirror configured. If you
+installed Debian without a network connection, apt may only know about your
+installer media — in which case `sudo apt update` cheerfully reports success
+while every install fails with "Unable to locate package". Check with:
+
+    apt-cache policy blueman
+
+`Candidate: (none)` means no mirror is configured. The setup script detects this
+before installing anything and offers to add the standard Debian mirror, so you
+can let it handle the problem — but it is worth knowing the symptom, because
+nothing about it points at the cause.
+
 ### 2. Set up sudo for your user
 
 Debian does not configure sudo for regular users by default. This must be

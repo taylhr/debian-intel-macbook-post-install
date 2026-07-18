@@ -756,9 +756,70 @@ else
     print_warning "No APT sources file found — skipping component enable"
 fi
 
+# An offline Debian install — which is how most people arrive at this script —
+# leaves apt with no network repository: only the installer media, or nothing at
+# all. `apt update` then succeeds with nothing to fetch and reports the system as
+# up to date, while every install afterwards fails with "Unable to locate
+# package". Catch that here, because the symptom points nowhere near the cause.
+if grep -rhsE '^[[:space:]]*(deb[[:space:]]|URIs:)' \
+        /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null \
+        | grep -qE 'https?://'; then
+    print_ok "Network package repository configured"
+else
+    print_warning "No network package repository is configured."
+    print_warning "apt can only see your installer media, so package installs will fail"
+    print_warning "even though 'apt update' reports success. This is normal after an"
+    print_warning "offline Debian install."
+    echo ""
+    read -p "$(echo -e ${BOLD}"  Add the standard Debian mirror now? [Y/n] "${NC})" add_mirror
+    if [[ "$add_mirror" =~ ^[Nn]$ ]]; then
+        print_warning "Continuing without a network repository — expect installs to fail."
+    else
+        CODENAME=$( . /etc/os-release 2>/dev/null && echo "${VERSION_CODENAME:-trixie}" )
+        SIGNED_BY=""
+        [ -f /usr/share/keyrings/debian-archive-keyring.gpg ] && \
+            SIGNED_BY="Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg"
+
+        # Built line by line rather than from one heredoc: deb822 treats a blank
+        # line as a stanza separator, so interpolating an empty Signed-By would
+        # split a stanza in half and corrupt the file.
+        emit_stanza() {
+            echo "Types: deb"
+            echo "URIs: $1"
+            echo "Suites: $2"
+            echo "Components: main contrib non-free non-free-firmware"
+            [ -n "$SIGNED_BY" ] && echo "$SIGNED_BY"
+            echo ""
+        }
+        # Its own file, so an existing debian.sources is left untouched.
+        {
+            emit_stanza "http://deb.debian.org/debian" "$CODENAME $CODENAME-updates"
+            emit_stanza "http://security.debian.org/debian-security" "$CODENAME-security"
+        } | sudo tee /etc/apt/sources.list.d/debian-network.sources > /dev/null
+        print_ok "Debian mirror added (/etc/apt/sources.list.d/debian-network.sources)"
+    fi
+fi
+
 print_info "Refreshing package list (this may take a moment)..."
-sudo apt update -y >>"$LOG_FILE" 2>&1
-print_ok "Package list is up to date"
+# Every apt install below depends on this having worked. Swallowing the exit
+# status here is how a run ends up reporting a dozen packages as "failed to
+# install" with no visible cause, so surface it instead and let the user decide.
+if sudo apt update -y >>"$LOG_FILE" 2>&1; then
+    print_ok "Package list is up to date"
+else
+    echo -e "${RED}  ✘ apt update failed${NC}"
+    echo -e "${YELLOW}  Last lines of the error:${NC}"
+    tail -n 6 "$LOG_FILE" | sed 's/^/    /'
+    echo ""
+    print_warning "Package installs will almost certainly fail until this is fixed."
+    print_warning "Common causes:"
+    print_warning "  • a cdrom: entry in your apt sources (comment it out)"
+    print_warning "  • an unreachable or misconfigured mirror"
+    print_warning "  • a previously interrupted install — try: sudo dpkg --configure -a"
+    print_warning "Full log: $LOG_FILE"
+    read -p "$(echo -e ${BOLD}"  Continue anyway? [y/N] "${NC})" confirm
+    [[ "$confirm" =~ ^[Yy]$ ]] || exit 1
+fi
 
 # ─────────────────────────────────────────────
 # GROUP: wifi-broadcom
@@ -941,8 +1002,12 @@ group_apps_dev() {
         print_info "Adding VS Code apt repository..."
         echo "deb [arch=amd64,arm64,armhf signed-by=$vscode_key] https://packages.microsoft.com/repos/code stable main" \
             | sudo tee "$vscode_list" > /dev/null
-        sudo apt update -y >>"$LOG_FILE" 2>&1
-        print_ok "VS Code repository added"
+        if sudo apt update -y >>"$LOG_FILE" 2>&1; then
+            print_ok "VS Code repository added"
+        else
+            print_warning "VS Code repository added, but apt update failed — see $LOG_FILE"
+            print_warning "The 'code' install below will likely fail as a result."
+        fi
     else
         # VS Code's own updater can auto-create vscode.sources pointing to a different keyring,
         # which conflicts with our vscode.list and breaks all apt commands.
