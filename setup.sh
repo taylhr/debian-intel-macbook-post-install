@@ -696,7 +696,9 @@ if [ -n "$BACKLIGHT_PATH" ]; then
     # either moves imperceptibly or overshoots max_brightness on the first press,
     # and writing past max returns EINVAL and changes nothing. Aim for ~20 steps
     # across whatever range this machine actually has.
-    BRIGHTNESS_STEP=$(( MAX_BRIGHTNESS / 20 ))
+    # ~10 steps across the range, matching the 10%-per-press feel of a desktop
+    # brightness OSD. Twenty steps reads as sluggish on a 0-100 device.
+    BRIGHTNESS_STEP=$(( MAX_BRIGHTNESS / 10 ))
     [ "$BRIGHTNESS_STEP" -lt 1 ] && BRIGHTNESS_STEP=1
     print_ok "Screen backlight detected: $(basename "$BACKLIGHT_PATH") (max: $MAX_BRIGHTNESS, step: $BRIGHTNESS_STEP)"
 else
@@ -1185,11 +1187,27 @@ dashboard = A-f2
 scale = command(sh -c 'DISPLAY=:0 XAUTHORITY=$ACTUAL_HOME/.Xauthority rofi -show window -show-icons')
 EOF
 
-    # Brightness keys — only when a backlight device was actually found. keyd
-    # swallows a key regardless of whether its command works, so mapping these
-    # against a missing path would leave F1/F2 doing nothing at all where they
-    # previously worked. Better to not claim the keys than to break them.
-    if [ -n "$BACKLIGHT_PATH" ]; then
+    # Will XFCE's power manager be handling brightness on this machine? It draws
+    # the on-screen slider and uses XFCE's own step size, and keyd's command()
+    # swallows the key before it ever gets there — so remapping in that case
+    # trades a good handler for a worse one: brightness still changes, but the
+    # OSD disappears. Check both what is installed and what this run will install,
+    # since the power group runs after this one.
+    XFCE_HANDLES_BRIGHTNESS=false
+    if dpkg -s xfce4-power-manager &>/dev/null; then
+        XFCE_HANDLES_BRIGHTNESS=true
+    elif is_enabled power && { is_enabled desktop || $XFCE_PREEXISTING; }; then
+        XFCE_HANDLES_BRIGHTNESS=true
+    fi
+
+    # Brightness keys — only when a backlight device exists AND nothing better is
+    # already handling them. keyd swallows a key regardless of whether the command
+    # bound to it works, so claiming these wrongly is strictly worse than leaving
+    # them alone.
+    if $XFCE_HANDLES_BRIGHTNESS; then
+        print_info "Leaving F1/F2 to xfce4-power-manager — it handles them natively"
+        print_info "and draws the on-screen brightness slider, which keyd cannot."
+    elif [ -n "$BACKLIGHT_PATH" ]; then
         sudo tee -a "$keyd_conf" > /dev/null << EOF
 
 # Brightness keys (sysfs: $BACKLIGHT_PATH, range 0-$MAX_BRIGHTNESS, step $BRIGHTNESS_STEP)
@@ -1245,8 +1263,10 @@ EOF
     echo -e "\n  ${CYAN}Key mappings applied:${NC}"
     echo -e "  • Cmd key now works as Ctrl"
     echo -e "  • Cmd+Space / F4 opens app finder"
-    if [ -n "$BACKLIGHT_PATH" ]; then
-        echo -e "  • F1/F2 controls screen brightness"
+    if $XFCE_HANDLES_BRIGHTNESS; then
+        echo -e "  • F1/F2 controls screen brightness (via XFCE, with on-screen slider)"
+    elif [ -n "$BACKLIGHT_PATH" ]; then
+        echo -e "  • F1/F2 controls screen brightness (via keyd, no on-screen slider)"
     else
         echo -e "  • ${YELLOW}F1/F2 left unmapped — no backlight device found${NC}"
     fi
